@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+if [ "$GOBDLIB" == "" ]; then
+    echo -e "\033[91m \$GOBDLIB found, please check you ~/.bashrc or ~/.zshrc \033[0m"
+    exit -1;
+fi
+
+OLDGOBIN=$GOBIN
+OLDGOPATH=$GOPATH
+
+export GOBIN=$PWD/bin
+export GOPATH=$GOBDLIB:$PWD
+
+function goInstall {
+    go tool vet src/$1
+    golint src/$1
+    if [ $? != 0 ]; then
+        echo -e "\033[91m ------ golint check failed ------\033[0m"
+        exit -1;
+    fi
+    go install $1
+    if [ $? -eq 0 ]; then
+        echo -e "\033[92m ------ go install $1 ok ------ \033[0m"
+    else
+        echo -e "\033[91m ------ go install $1 failed ------\033[0m"
+    fi
+}
+
+if [ $# == 1 ]; then
+    goInstall $1
+elif [ $2 == "all" ]; then
+    rm -rf $GOBDLIB/pkg
+    goInstall $1
+fi
+
+export GOBIN=$OLDGOBIN
+export GOPATH="$OLDGOPATH"
